@@ -1,24 +1,35 @@
+/* REFRESH FLIGHT COMPUTER SOFTWARE
+ *  V0.11 - DECEMBER 2021
+ *  LAVIE OHANA (@lavie154) / CALIFORNIA MODEL AEROSPACE
+ *  
+ *  It's okay, I have no idea what this code does either.
+ *  
+ *  Refresh is a 54mm form-factor flight computer designed for
+ *  datalogging on high-power rockets. It's my first attempt at
+ *  such a device, and definitely my first attempt at programming
+ *  something this complex, so view this code at your own risk!
+ *  
+ *  Refresh's major subsystems:
+ *  MCU   - Teensy 4.1
+ *  IMU   - Bosch BMI088
+ *  BARO  - Bosch BMP388
+ *  GNSS  - CDtop PA1616S (Adafruit Ultimate GPS V3)
+ *  RADIO - HopeRF RFM69HCW @ 915 MHz
+ *  
+ *  Pyrotechnic deployments and backup altimeter data are provided
+ *  by a PerfectFlite Stratologger CF connected via UART.
+ *  
+ *  FYI - This code is INCOMPLETE! This is largely bashed together
+ *  example code and will slowly approach something more flight-worthy
+ *  as time goes on. Refresh itself is at about TRL 5 right now.
+ *  
+ *  If I were you, I wouldn't trust this code to work! Yet...
+ */
+
 #include "refreshSensorInit.h"
 #include <Adafruit_BMP3XX.h>
 #include <bmp3.h>
 #include <bmp3_defs.h>
-
-// Test code for Ultimate GPS Using Hardware Serial (e.g. GPS Flora or FeatherWing)
-//
-// This code shows how to listen to the GPS module via polling. Best used with
-// Feathers or Flora where you have hardware Serial and no interrupt
-//
-// Tested and works great with the Adafruit GPS FeatherWing
-// ------> https://www.adafruit.com/products/3133
-// or Flora GPS
-// ------> https://www.adafruit.com/products/1059
-// but also works with the shield, breakout
-// ------> https://www.adafruit.com/products/1272
-// ------> https://www.adafruit.com/products/746
-//
-// Pick one up today at the Adafruit electronics shop
-// and help support open source hardware & software! -ada
-
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_GPS.h>
