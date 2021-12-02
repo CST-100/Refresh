@@ -26,7 +26,7 @@
  *  If I were you, I wouldn't trust this code to work! Yet...
  */
 
-#include "refreshSensorInit.h"
+#include "refreshSensorInit.h" // This should take care of some init functions. Hopefully all of them soon.
 #include <Adafruit_BMP3XX.h>
 #include <bmp3.h>
 #include <bmp3_defs.h>
@@ -37,10 +37,7 @@
 #include <RH_RF69.h>
 #include "BMI088.h"
 
-// what's the name of the hardware serial port?
-
-
-// Connect to the GPS on the hardware port
+// Connect to the GPS on the UART port (defined in sensor init)
 Adafruit_GPS GPS(&GPSSerial);
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
@@ -52,27 +49,25 @@ RH_RF69 rf69(RFM69_CS, RFM69_INT);
 
 // *** BARO SETUP ***
 #define SEALEVELPRESSURE_HPA (1013.25)
-
 Adafruit_BMP3XX bmp;
 
 // *** IMU SETUP ***
+Bmi088Accel accel(Wire,0x18); //accel object
+Bmi088Gyro gyro(Wire,0x68); //gyro object
 
-/* accel object */
-Bmi088Accel accel(Wire,0x18);
-/* gyro object */
-Bmi088Gyro gyro(Wire,0x68);
-
-char Pstr[10];
-char Cstr[10];
-char Astr[10];
-char LTstr[10];
-char LNstr[10];
-char AXstr[10];
-char AYstr[10];
-char AZstr[10];
-char GXstr[10];
-char GYstr[10];
-char GZstr[10];
+// Defining all the strings used in the telemetry. There's likely cleaner ways to do this.
+// But for now, I'm making it everyone else's problem.
+char Pstr[10]; // Raw pressure as reported by the BMP388.
+char Cstr[10]; // Temperature, BMP388
+char Astr[10]; // Altitude (pressure derived), BMP388
+char LTstr[10]; // Latitude, GNSS
+char LNstr[10]; // Longitude, GNSS
+char AXstr[10]; // Acceleration (X-axis), IMU
+char AYstr[10]; // Acceleration (Y-axis), IMU
+char AZstr[10]; // Acceleration (Z-axis), IMU
+char GXstr[10]; // Rotation rate (X-axis), IMU
+char GYstr[10]; // Rotation rate (Y-axis), IMU
+char GZstr[10]; // Rotation rate (Z-axis), IMU
 
 double C,P,A,LT,LN,AX,AY,AZ,GX,GY,GZ;
 char buffer[50];
@@ -83,15 +78,11 @@ uint32_t timer = millis();
 void setup()
 {
   //while (!Serial);  // uncomment to have the sketch wait until Serial is ready
-
-  // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
-  // also spit it out
-  Serial.begin(115200);
+  Serial.begin(115200); //any slower is for bitches (also will probably piss off the GNSS)
   Serial.println("Refresh v0.11 - Booting Up");
   Serial.println("California Model Aerospace - 2021");
-  Licc(41, 2);
+  Licc(41, 2); // ya like jazz?
   GNSSinit();
-
   // Ask for firmware version
   GPSSerial.println(PMTK_Q_RELEASE);
 
@@ -100,7 +91,7 @@ void setup()
   pinMode(RFM69_RST, OUTPUT);
   digitalWrite(RFM69_RST, LOW);
 
-  Serial.println("Feather RFM69 TX Test!");
+  Serial.println("Radio initializing!");
   Serial.println();
 
   // manual reset
