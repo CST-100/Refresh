@@ -14,7 +14,20 @@
 #include "refreshSensorInit.h"
 //Adafruit_GPS GPS(&GPSSerial);
 
+  long time = millis();
+  double SQUARE = 0; // acceleration
+  double LINEAR = 0; // speed
 
+double integrate(double IN){
+  double newTime = millis();
+  double deltaTime = newTime - time;
+  double avgSQ = (SQUARE - IN);
+  double newLINEAR = SQUARE + (avgSQ  * (deltaTime / 1000));
+  LINEAR = newLINEAR;
+  time = newTime;
+  SQUARE = IN;
+  return LINEAR;
+}
 
 void Licc(byte PIN, byte O){ // had to do it to em
   tone(PIN, (440 * pow(2,O)), 75);

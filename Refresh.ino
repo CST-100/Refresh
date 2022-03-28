@@ -1,5 +1,5 @@
 /* REFRESH FLIGHT COMPUTER SOFTWARE
- *  V0.11 - DECEMBER 2021
+ *  V0.2 - DECEMBER 2021
  *  LAVIE OHANA (@lavie154) / CALIFORNIA MODEL AEROSPACE
  *  
  *  It's okay, I have no idea what this code does either.
@@ -36,6 +36,7 @@
 #include <SPI.h>
 #include <RH_RF69.h>
 #include "BMI088.h"
+#include "kalman.h"
 
 // Connect to the GPS on the UART port (defined in sensor init)
 Adafruit_GPS GPS(&GPSSerial);
@@ -74,13 +75,22 @@ char buffer[50];
 
 uint32_t timer = millis();
 
+// kalman test stuff
+KalmanFilter filter(0.5, 0.1, 0.1); // Measurment Uncertainty, Error Uncertainty, Process Variance
+
+class kalman
+{
+  public:
+  double filteredData;
+  double sensorData;
+};
 
 void setup()
 {
   //while (!Serial);  // uncomment to have the sketch wait until Serial is ready
   Serial.begin(115200); //any slower is for bitches (also will probably piss off the GNSS)
-  Serial.println("Refresh v0.11 - Booting Up");
-  Serial.println("California Model Aerospace - 2021");
+  Serial.println("Refresh v0.2 - Booting Up");
+  Serial.println("California Model Aerospace - 2022");
   Licc(41, 2); // ya like jazz?
   GNSSinit();
   // Ask for firmware version
@@ -150,7 +160,6 @@ void setup()
     while (1) {}
 }
 }
-
 void loop() // run over and over again
 {
   // read data from the GPS in the 'main loop'
@@ -163,7 +172,7 @@ void loop() // run over and over again
     // a tricky thing here is if we print the NMEA sentence, or data
     // we end up not listening and catching other sentences!
     // so be very wary if using OUTPUT_ALLDATA and trying to print out data
-    Serial.print(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
+    //Serial.print(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
       return; // we can fail to parse a sentence in which case we should just wait for another
   }
@@ -200,22 +209,23 @@ void loop() // run over and over again
       Serial.print("Angle: "); Serial.println(GPS.angle);
       Serial.print("Altitude: "); Serial.println(GPS.altitude);
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
-    }
     */
+    }
      if (! bmp.performReading()) {
     Serial.println("Failed to perform reading :(");
     return;
   }
   accel.readSensor();
   gyro.readSensor();
-   Serial.println(bmp.pressure / 100);
+   //Serial.println(bmp.pressure / 100);
    P = bmp.readPressure() * 0.001;
    C = bmp.readTemperature();
    A = bmp.readAltitude(SEALEVELPRESSURE_HPA);
    LT = GPS.latitude;
    LN = GPS.longitude;
    AX = accel.getAccelX_mss();
-   AY = accel.getAccelY_mss();
+   AY = accel.getAccelY_mss(); 
+   AY = -AY; // accel upside down - Y up
    AZ = accel.getAccelZ_mss();
    GX = gyro.getGyroX_rads();
    GY = gyro.getGyroY_rads();
@@ -237,10 +247,23 @@ void loop() // run over and over again
 
    //sendLen = strlen(buffer);
    uint8_t radiopacket[] = {bmp.pressure / 100.0};
-   Serial.print("Sending "); Serial.println(buffer);
+  // Serial.print("Sending "); Serial.println(buffer);
    rf69.send((uint8_t *)buffer, strlen(buffer));
    rf69.waitPacketSent();
-  }
+
+   // kalman test stuff
+  kalman kal;
+  kal.sensorData = AY;
+  kal.filteredData = filter.updateEstimate(kal.sensorData);
+  
+  //Serial.print("Filtered Data: ");
+  //Serial.print(kal.filteredData);
+  Serial.println();
+  //p2
+  integrate(AY);
+  //Serial.print();
+  //Serial.print(millis());
+  //GNC();
 }
 /* INITIALIZATION FUNCTIONS */
 // These will likely get their own file someday, I just need to learn how to make that happen.
@@ -269,4 +292,7 @@ void Blink(byte PIN, byte DELAY_MS, byte loops) {
     digitalWrite(PIN,LOW);
     delay(DELAY_MS);
   }
+}
+void GNC() {
+
 }

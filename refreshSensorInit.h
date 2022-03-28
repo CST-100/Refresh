@@ -16,6 +16,7 @@
 //void GNSSinit();
 
 void Licc(byte PIN, byte O);
+double integrate(double IN);
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else
